@@ -62,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         console.log('Sending to webhook:', webhookPayload);
 
-        const webhookResponse = await fetch('https://n8n.automabot.net.br/webhook/cadastro', {
+        const webhookResponse = await fetch('https://n8n.automabot.net.br/webhook-test/cadastro', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
