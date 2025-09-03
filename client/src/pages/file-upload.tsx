@@ -17,10 +17,10 @@ interface StatusIndicatorProps {
 function StatusIndicator({ status, currentStatus, children }: StatusIndicatorProps) {
   const isActive = currentStatus === status;
   const dotColors = {
-    waiting: "bg-green-500",
-    uploading: "bg-orange-500", 
-    error: "bg-red-500",
-    completed: "bg-blue-500",
+    waiting: isActive ? "bg-yellow-500" : "bg-gray-300",
+    uploading: isActive ? "bg-blue-500" : "bg-gray-300", 
+    error: isActive ? "bg-red-500" : "bg-gray-300",
+    completed: isActive ? "bg-green-500" : "bg-gray-300",
   };
 
   return (
@@ -121,6 +121,15 @@ export default function FileUploadPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Determinar qual LED deve estar ativo baseado no status
+  const getCurrentLEDStatus = () => {
+    if (!webhookReady) return "waiting";
+    if (uploadStatus === "uploading") return "uploading";
+    if (uploadStatus === "error") return "error";
+    if (uploadStatus === "completed") return "completed";
+    return "waiting";
+  };
+
   const handleUpload = () => {
     if (selectedFile && webhookReady) {
       uploadMutation.mutate(selectedFile);
@@ -128,7 +137,7 @@ export default function FileUploadPage() {
   };
 
   const goBackToRegistration = () => {
-    setLocation("/");
+    setLocation("/registration");
   };
 
   return (
@@ -157,27 +166,20 @@ export default function FileUploadPage() {
               <h2 className="text-lg font-semibold text-foreground">Status</h2>
               
               <div className="space-y-3">
-                <div className="status-indicator">
-                  <div className={`w-3 h-3 rounded-full ${webhookReady ? "bg-green-600" : "bg-orange-500"}`}></div>
-                  <span className={webhookReady ? "text-foreground" : "text-muted-foreground"}>
-                    {webhookReady ? "Backend Conectado" : "Aguardando Backend"}
-                  </span>
-                </div>
-                
-                <StatusIndicator status="waiting" currentStatus={uploadStatus}>
-                  Processo iniciado
+                <StatusIndicator status="waiting" currentStatus={getCurrentLEDStatus()}>
+                  Aguardando arquivo
                 </StatusIndicator>
                 
-                <StatusIndicator status="uploading" currentStatus={uploadStatus}>
-                  Arquivo subido
+                <StatusIndicator status="uploading" currentStatus={getCurrentLEDStatus()}>
+                  Enviando arquivo
                 </StatusIndicator>
                 
-                <StatusIndicator status="error" currentStatus={uploadStatus}>
-                  Problema de Upload
+                <StatusIndicator status="error" currentStatus={getCurrentLEDStatus()}>
+                  Erro no processo
                 </StatusIndicator>
                 
-                <StatusIndicator status="completed" currentStatus={uploadStatus}>
-                  Finalizado
+                <StatusIndicator status="completed" currentStatus={getCurrentLEDStatus()}>
+                  Processo finalizado
                 </StatusIndicator>
               </div>
             </div>

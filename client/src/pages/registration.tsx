@@ -11,11 +11,39 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { ArrowLeft } from "lucide-react";
+
+// Placeholder for the new Cadastro page
+function CadastroPage() {
+  const [, setLocation] = useLocation();
+
+  const handleStartClick = () => {
+    // Redirect to webhook as per the requirement
+    window.location.href = "YOUR_WEBHOOK_URL_HERE"; // Replace with actual webhook URL
+  };
+
+  return (
+    <div className="bg-background text-foreground min-h-screen flex flex-col items-center justify-center p-6">
+      <CleannetLogo className="mb-8" />
+      <h1 className="text-4xl font-bold mb-4 text-center">Cadastro</h1>
+      <p className="text-xl text-muted-foreground mb-8 text-center">
+        Inicie seu cadastro
+      </p>
+      <Button
+        onClick={handleStartClick}
+        className="w-full max-w-sm px-8 py-4 rounded-lg font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors duration-200"
+        data-testid="button-start-cadastro"
+      >
+        Começar
+      </Button>
+    </div>
+  );
+}
 
 export default function Registration() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+
   const form = useForm<InsertRegistration>({
     resolver: zodResolver(insertRegistrationSchema),
     defaultValues: {
@@ -27,10 +55,26 @@ export default function Registration() {
     mode: "onChange",
   });
 
+  // Mocking LED status for demonstration. In a real app, this would be driven by mutation state.
+  const [ledStatus, setLedStatus] = useState({
+    step1: 'inactive', // e.g., waiting for data input
+    step2: 'inactive', // e.g., processing
+    step3: 'inactive', // e.g., completed
+  });
+
   const registrationMutation = useMutation({
     mutationFn: async (data: InsertRegistration) => {
+      // Simulate different process steps
+      setLedStatus({ step1: 'active', step2: 'inactive', step3: 'inactive' });
       const response = await apiRequest("POST", "/api/registration", data);
-      return response.json();
+      const result = await response.json();
+      if (response.ok) {
+        setLedStatus({ step1: 'completed', step2: 'active', step3: 'inactive' });
+      } else {
+        setLedStatus({ step1: 'error', step2: 'inactive', step3: 'inactive' });
+        throw new Error(result.message || "Erro desconhecido");
+      }
+      return result;
     },
     onSuccess: (data) => {
       toast({
@@ -39,14 +83,16 @@ export default function Registration() {
       });
       // Store registration ID for file upload
       sessionStorage.setItem('registrationId', data.registration.id);
+      setLedStatus({ step1: 'completed', step2: 'completed', step3: 'active' });
       setLocation("/upload");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Erro",
         description: error.message,
         variant: "destructive",
       });
+      setLedStatus(prev => ({ ...prev, step2: 'error' })); // Mark step 2 as error
     },
   });
 
@@ -56,6 +102,11 @@ export default function Registration() {
 
   const { formState: { isValid } } = form;
   const isSubmitting = registrationMutation.isPending;
+
+  // Added function to navigate to the new Cadastro page
+  const goToCadastro = () => {
+    setLocation("/cadastro");
+  };
 
   return (
     <div className="bg-background text-foreground min-h-screen">
@@ -76,6 +127,14 @@ export default function Registration() {
               Informações para contratação
             </p>
           </div>
+
+          {/* Status LEDs (Example) */}
+          <div className="flex justify-center space-x-4 mb-8">
+            <div className={`w-4 h-4 rounded-full ${ledStatus.step1 === 'active' ? 'bg-destructive' : ledStatus.step1 === 'completed' ? 'bg-green-500' : 'bg-gray-300'}`} data-testid="led-step1"></div>
+            <div className={`w-4 h-4 rounded-full ${ledStatus.step2 === 'active' ? 'bg-destructive' : ledStatus.step2 === 'completed' ? 'bg-green-500' : 'bg-gray-300'}`} data-testid="led-step2"></div>
+            <div className={`w-4 h-4 rounded-full ${ledStatus.step3 === 'active' ? 'bg-destructive' : ledStatus.step3 === 'completed' ? 'bg-green-500' : 'bg-gray-300'}`} data-testid="led-step3"></div>
+          </div>
+
 
           {/* Registration Form */}
           <Card className="bg-card rounded-lg shadow-sm border border-border">
@@ -166,8 +225,34 @@ export default function Registration() {
               </form>
             </CardContent>
           </Card>
+
+          {/* Button to navigate to the new Cadastro page */}
+          <div className="text-center">
+            <Button
+              variant="outline"
+              onClick={goToCadastro}
+              className="px-6 py-2 text-primary hover:text-primary/80 font-medium transition-colors duration-200"
+              data-testid="button-go-to-cadastro"
+            >
+              Ir para Cadastro
+            </Button>
+          </div>
         </div>
       </main>
     </div>
   );
 }
+
+// Note: The routing for CadastroPage needs to be set up in your main App component or router configuration.
+// For example, in your main router file:
+// import { Route } from "wouter";
+//
+// function App() {
+//   return (
+//     <>
+//       <Route path="/cadastro" component={CadastroPage} />
+//       <Route path="/registration" component={Registration} /> {/* Assuming this is your registration route */}
+//       {/* other routes */}
+//     </>
+//   );
+// }
