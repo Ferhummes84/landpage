@@ -120,17 +120,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.file) {
         // Handle file upload - create FormData
         const formData = new FormData();
-        
+
         // Read file from disk
         const fileBuffer = fs.readFileSync(req.file.path);
         const blob = new Blob([fileBuffer], { type: req.file.mimetype || 'application/octet-stream' });
         formData.append('file', blob, req.file.originalname);
-        
+
         // Add other form fields
         Object.keys(req.body).forEach(key => {
           formData.append(key, req.body[key]);
         });
-        
+
         formData.append('fileName', req.file.originalname);
         formData.append('fileSize', `${(req.file.size / 1024 / 1024).toFixed(2)} MB`);
         formData.append('type', 'file_upload');
@@ -200,7 +200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         formData.append('fileSize', uploadRecord.fileSize);
         formData.append('uploadId', uploadRecord.id);
 
-        const webhookResponse = await fetch('https://n8n.automabot.net.br/webhook/cadastro', {
+        const webhookResponse = await fetch('https://n8n.automabot.net.br/webhook/c7b798e0-2a78-4d6b-95c6-081e2f0f7546', {
           method: 'POST',
           body: formData,
         });
