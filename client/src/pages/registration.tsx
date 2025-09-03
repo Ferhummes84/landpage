@@ -34,11 +34,13 @@ export default function Registration() {
     onSuccess: (data) => {
       toast({
         title: "Sucesso",
-        description: data.message,
+        description: "Cadastro realizado com sucesso! Os dados foram enviados para processamento.",
       });
-      // Store registration ID for file upload
+      // Store registration ID for future use
       sessionStorage.setItem('registrationId', data.registration.id);
-      setLocation("/upload");
+      
+      // Reset form after successful submission
+      form.reset();
     },
     onError: (error) => {
       toast({
