@@ -23,18 +23,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const response = webhookResponses.get(registrationId);
       
       if (response) {
-        res.json(response);
+        res.json({
+          success: true,
+          ...response
+        });
       } else {
-        res.status(404).json({ 
+        res.json({ 
           success: false, 
-          message: "Webhook response not found" 
+          message: "Aguardando resposta do webhook",
+          ready: false
         });
       }
     } catch (error) {
       console.error('Webhook status error:', error);
-      res.status(500).json({ 
+      res.json({ 
         success: false, 
-        error: error instanceof Error ? error.message : "Erro ao verificar status" 
+        error: error instanceof Error ? error.message : "Erro ao verificar status",
+        ready: false
       });
     }
   });

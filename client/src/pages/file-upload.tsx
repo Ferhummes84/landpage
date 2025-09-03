@@ -100,15 +100,28 @@ export default function FileUploadPage() {
     const checkWebhookStatus = async () => {
       try {
         const registrationId = sessionStorage.getItem('registrationId');
-        if (!registrationId) return;
+        if (!registrationId) {
+          console.log('No registration ID found');
+          return;
+        }
 
+        console.log('Checking webhook status for:', registrationId);
         const response = await fetch(`/api/webhook-status/${registrationId}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.resumeUrl) {
-            setResumeUrl(data.resumeUrl);
-            setWebhookReady(true);
-          }
+        
+        if (!response.ok) {
+          console.error('Response not ok:', response.status, response.statusText);
+          return;
+        }
+
+        const data = await response.json();
+        console.log('Webhook status response:', data);
+        
+        if (data.success && data.resumeUrl) {
+          console.log('Resume URL found:', data.resumeUrl);
+          setResumeUrl(data.resumeUrl);
+          setWebhookReady(true);
+        } else {
+          console.log('Webhook not ready yet:', data.message);
         }
       } catch (error) {
         console.error('Erro ao verificar status do webhook:', error);
