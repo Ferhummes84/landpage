@@ -1,0 +1,39 @@
+> rest-express@1.0.0 dev
+1:10:28 PM [express] serving on port 5000s
+Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+Sending to webhook: {
+  type: 'registration',
+  data: {
+    cpf: '860.949.200-15',
+    nomeCompleto: 'FERNANDO ALBERTO MENDEZ RUBIO',
+    endereco: 'Rua Sobral, 180',
+    email: 'ferhummes1984@gmail.com'
+  },
+  registrationId: '1d3755bc-7dda-423d-99e8-e991b1d2a1f9'
+}
+Webhook response status: 404
+Webhook response headers: {
+  'content-length': '234',
+  'content-type': 'application/json; charset=utf-8',
+  date: 'Wed, 03 Sep 2025 13:10:41 GMT',
+  etag: 'W/"ea-NjJRjk/elTrXbzXFbeipZjK1dk8"',
+  'strict-transport-security': 'max-age=315360000; includeSubDomains; preload',
+  vary: 'Accept-Encoding',
+  'x-content-type-options': 'nosniff',
+  'x-xss-protection': '1; mode=block'
+}
+Webhook error: 404 {"code":404,"message":"The requested webhook \"cadastro\" is not registered.","hint":"Click the 'Execute workflow' button on the canvas, then try again. (In test mode, the webhook only works for one call after you click this button)"}
+1:10:41 PM [express] POST /api/registration 200 in 176ms :: {"success":true,"registration":{"cpf":"8…
+1:10:41 PM [express] GET /api/webhook-status/1d3755bc-7dda-423d-99e8-e991b1d2a1f9 404 in 1ms :: {"su…
+1:10:43 PM [express] GET /api/webhook-status/1d3755bc-7dda-423d-99e8-e991b1d2a1f9 404 in 1ms :: {"su…
+1:10:45 PM [express] GET /api/webhook-status/1d3755bc-7dda-423d-99e8-e991b1d2a1f9 404 in 1ms :: {"su…
+1:10:47 PM [express] GET /api/webhook-status/1d3755bc-7dda-423d-99e8-e991b1d2a1f9 404 in 1ms :: {"su…
+1:10:49 PM [express] GET /api/webhook-status/1d3755bc-7dda-423d-99e8-e991b1d2a1f9 404 in 0ms :: {"su…
+1:10:51 PM [express] GET /api/webhook-status/1d3755bc-7dda-423d-99e8-e991b1d2a1f9 404 in 1ms :: {"su…
+1:10:53 PM [express] GET /api/webhook-status/1d3755bc-7dda-423d-99e8-e991b1d2a1f9 404 in 1ms :: {"su…
+1:10:55 PM [express] GET /api/webhook-status/1d3755bc-7dda-423d-99e8-e991b1d2a1f9 404 in 0ms :: {"su…
+1:10:57 PM [express] GET /api/webhook-status/1d3755bc-7dda-423d-99e8-e991b1d2a1f9 404 in 0ms :: {"su…
+1:10:59 PM [express] GET /api/webhook-status/1d3755bc-7dda-423d-99e8-e991b1d2a1f9 404 in 1ms :: {"su…
+1:11:01 PM [express] GET /api/webhook-status/1d3755bc-7dda-423d-99e8-e991b1d2a1f9 404 in 1ms :: {"su…
