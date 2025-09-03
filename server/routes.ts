@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertRegistrationSchema } from "@shared/schema";
 import multer from "multer";
+import fs from "fs";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -54,13 +55,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const webhookPayload = {
           type: 'registration',
-          data: validatedData,
           registrationId: registration.id,
+          // Send user data directly in the payload root
+          ...validatedData
         };
 
         console.log('Sending to webhook:', webhookPayload);
 
-        const webhookResponse = await fetch('https://n8n.automabot.net.br/webhook/cadastro', {
+        const webhookResponse = await fetch('https://n8n.automabot.net.br/webhook-test/cadastro', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -100,7 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Resume workflow endpoint (for file uploads)
-  app.post("/api/resume-workflow", async (req, res) => {
+  app.post("/api/resume-workflow", upload.single('file'), async (req, res) => {
     try {
       const resumeUrl = req.query.resumeUrl as string;
 
@@ -112,20 +114,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('Forwarding request to:', resumeUrl);
+      console.log('Request has file:', !!req.file);
+      console.log('Request body:', req.body);
 
-      // Forward request to n8n
-      const response = await fetch(resumeUrl, {
-        method: 'POST',
-        body: JSON.stringify(req.body),
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
+      if (req.file) {
+        // Handle file upload - create FormData
+        const formData = new FormData();
+        
+        // Read file from disk
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const blob = new Blob([fileBuffer], { type: req.file.mimetype || 'application/octet-stream' });
+        formData.append('file', blob, req.file.originalname);
+        
+        // Add other form fields
+        Object.keys(req.body).forEach(key => {
+          formData.append(key, req.body[key]);
+        });
+        
+        formData.append('fileName', req.file.originalname);
+        formData.append('fileSize', `${(req.file.size / 1024 / 1024).toFixed(2)} MB`);
+        formData.append('type', 'file_upload');
 
-      const result = await response.json();
-      console.log('n8n response:', result);
+        const response = await fetch(resumeUrl, {
+          method: 'POST',
+          body: formData,
+        });
 
-      res.json(result);
+        // Clean up temporary file
+        fs.unlinkSync(req.file.path);
+
+        const result = await response.json();
+        console.log('n8n file upload response:', result);
+        res.json(result);
+      } else {
+        // Handle regular JSON data
+        const response = await fetch(resumeUrl, {
+          method: 'POST',
+          body: JSON.stringify(req.body),
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
+        const result = await response.json();
+        console.log('n8n JSON response:', result);
+        res.json(result);
+      }
     } catch (error) {
       console.error('Resume workflow error:', error);
       res.status(500).json({
