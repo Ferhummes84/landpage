@@ -29,7 +29,12 @@ export default function WelcomePage() {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Webhook response:', data);
+      // Store resumeUrl if provided
+      if (data.resumeUrl) {
+        sessionStorage.setItem('resumeUrl', data.resumeUrl);
+      }
       toast({
         title: "Processo Iniciado",
         description: "Redirecionando para o cadastro...",

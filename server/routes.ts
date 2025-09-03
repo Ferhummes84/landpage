@@ -13,6 +13,32 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Store webhook responses in memory (for production use a database)
+  const webhookResponses = new Map<string, any>();
+
+  // Webhook status endpoint
+  app.get("/api/webhook-status/:registrationId", async (req, res) => {
+    try {
+      const { registrationId } = req.params;
+      const response = webhookResponses.get(registrationId);
+      
+      if (response) {
+        res.json(response);
+      } else {
+        res.status(404).json({ 
+          success: false, 
+          message: "Webhook response not found" 
+        });
+      }
+    } catch (error) {
+      console.error('Webhook status error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : "Erro ao verificar status" 
+      });
+    }
+  });
+
   // Registration endpoint
   app.post("/api/registration", async (req, res) => {
     try {
@@ -21,20 +47,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send data to webhook
       try {
+        const webhookPayload = {
+          type: 'registration',
+          data: validatedData,
+          registrationId: registration.id,
+        };
+        
+        console.log('Sending to webhook:', webhookPayload);
+        
         const webhookResponse = await fetch('https://n8n.automabot.net.br/webhook-test/cadastro', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            type: 'registration',
-            data: validatedData,
-            registrationId: registration.id,
-          }),
+          body: JSON.stringify(webhookPayload),
         });
 
-        if (!webhookResponse.ok) {
-          console.error('Webhook error:', webhookResponse.statusText);
+        console.log('Webhook response status:', webhookResponse.status);
+        console.log('Webhook response headers:', Object.fromEntries(webhookResponse.headers.entries()));
+
+        if (webhookResponse.ok) {
+          const webhookData = await webhookResponse.json();
+          // Store webhook response for later retrieval
+          webhookResponses.set(registration.id, webhookData);
+          console.log('Webhook response received:', webhookData);
+        } else {
+          const errorText = await webhookResponse.text();
+          console.error('Webhook error:', webhookResponse.status, errorText);
         }
       } catch (webhookError) {
         console.error('Failed to send to webhook:', webhookError);
@@ -55,7 +94,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // File upload endpoint
+  // Resume workflow endpoint (for file uploads)
+  app.post("/api/resume-workflow", async (req, res) => {
+    try {
+      const resumeUrl = req.query.resumeUrl as string;
+      
+      if (!resumeUrl) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "resumeUrl is required" 
+        });
+      }
+
+      console.log('Forwarding request to:', resumeUrl);
+
+      // Stream request body directly to n8n with duplex option
+      const response = await fetch(resumeUrl, {
+        method: 'POST',
+        body: req,
+        duplex: 'half' as RequestDuplex,
+        headers: {
+          'Content-Type': req.headers['content-type'] || '',
+          'Content-Length': req.headers['content-length'] || '',
+        }
+      });
+
+      const result = await response.json();
+      console.log('n8n response:', result);
+
+      res.json(result);
+    } catch (error) {
+      console.error('Resume workflow error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : "Erro ao processar" 
+      });
+    }
+  });
+
+  // File upload endpoint (deprecated - use resume workflow instead)
   app.post("/api/upload", upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {

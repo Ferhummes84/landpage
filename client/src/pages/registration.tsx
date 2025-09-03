@@ -66,7 +66,14 @@ export default function Registration() {
     mutationFn: async (data: InsertRegistration) => {
       // Simulate different process steps
       setLedStatus({ step1: 'active', step2: 'inactive', step3: 'inactive' });
-      const response = await apiRequest("POST", "/api/registration", data);
+      const response = await fetch("/api/registration", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
       const result = await response.json();
       if (response.ok) {
         setLedStatus({ step1: 'completed', step2: 'active', step3: 'inactive' });
