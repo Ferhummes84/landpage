@@ -1,8 +1,8 @@
 export function CleannetLogo() {
   return (
-    <div className="text-2xl font-bold tracking-tight">
-      <span className="text-foreground">CLEA</span>
-      <span className="text-destructive">NET</span>
+    <div className="text-3xl font-bold tracking-wider">
+      <span className="text-gray-900 dark:text-white">CLEAN</span>
+      <span className="text-red-600">NET</span>
     </div>
   );
 }

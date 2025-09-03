@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { ArrowLeft, Upload } from "lucide-react";
@@ -38,9 +38,15 @@ export default function FileUploadPage() {
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<"waiting" | "uploading" | "error" | "completed">("waiting");
+  const [webhookReady, setWebhookReady] = useState(false);
+  const [resumeUrl, setResumeUrl] = useState<string | null>(null);
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
+      if (!webhookReady || !resumeUrl) {
+        throw new Error('Aguardando resposta do backend');
+      }
+      
       setUploadStatus("uploading");
       
       const formData = new FormData();
@@ -51,7 +57,7 @@ export default function FileUploadPage() {
         formData.append('registrationId', registrationId);
       }
 
-      const response = await fetch('/api/upload', {
+      const response = await fetch(`/api/resume-workflow?resumeUrl=${encodeURIComponent(resumeUrl)}`, {
         method: 'POST',
         body: formData,
       });
@@ -89,8 +95,34 @@ export default function FileUploadPage() {
     setUploadStatus("waiting");
   };
 
+  // Verificar se o webhook está pronto
+  useEffect(() => {
+    const checkWebhookStatus = async () => {
+      try {
+        const registrationId = sessionStorage.getItem('registrationId');
+        if (!registrationId) return;
+
+        const response = await fetch(`/api/webhook-status/${registrationId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.resumeUrl) {
+            setResumeUrl(data.resumeUrl);
+            setWebhookReady(true);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao verificar status do webhook:', error);
+      }
+    };
+
+    const interval = setInterval(checkWebhookStatus, 2000);
+    checkWebhookStatus(); // Verificar imediatamente
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleUpload = () => {
-    if (selectedFile) {
+    if (selectedFile && webhookReady) {
       uploadMutation.mutate(selectedFile);
     }
   };
@@ -125,6 +157,13 @@ export default function FileUploadPage() {
               <h2 className="text-lg font-semibold text-foreground">Status</h2>
               
               <div className="space-y-3">
+                <div className="status-indicator">
+                  <div className={`w-3 h-3 rounded-full ${webhookReady ? "bg-green-600" : "bg-orange-500"}`}></div>
+                  <span className={webhookReady ? "text-foreground" : "text-muted-foreground"}>
+                    {webhookReady ? "Backend Conectado" : "Aguardando Backend"}
+                  </span>
+                </div>
+                
                 <StatusIndicator status="waiting" currentStatus={uploadStatus}>
                   Processo iniciado
                 </StatusIndicator>
@@ -158,15 +197,17 @@ export default function FileUploadPage() {
                 {selectedFile && (
                   <Button
                     onClick={handleUpload}
-                    disabled={uploadMutation.isPending || uploadStatus === "completed"}
+                    disabled={!webhookReady || uploadMutation.isPending || uploadStatus === "completed"}
                     className={`w-full mt-6 px-6 py-3 rounded-md font-medium transition-all duration-200 ${
                       uploadStatus === "completed"
-                        ? "bg-green-500 text-white"
+                        ? "bg-green-600 text-white"
                         : uploadStatus === "error"
-                        ? "bg-red-500 text-white"
+                        ? "bg-red-600 text-white"
                         : uploadMutation.isPending
-                        ? "bg-muted text-muted-foreground cursor-not-allowed"
-                        : "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+                        ? "bg-gray-500 text-white cursor-not-allowed"
+                        : !webhookReady
+                        ? "bg-orange-500 text-white cursor-not-allowed"
+                        : "bg-gray-900 hover:bg-gray-800 text-white cursor-pointer"
                     }`}
                     data-testid="button-upload"
                   >
@@ -177,6 +218,8 @@ export default function FileUploadPage() {
                       ? "Upload Concluído"
                       : uploadStatus === "error"
                       ? "Erro no Upload"
+                      : !webhookReady
+                      ? "Aguardando Backend..."
                       : "Fazer Upload"
                     }
                   </Button>

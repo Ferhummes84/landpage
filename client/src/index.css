@@ -107,18 +107,18 @@
 }
 
 .upload-area {
-  border: 2px dashed hsl(var(--border));
+  border: 2px dashed #e5e7eb;
   transition: all 0.3s ease;
 }
 
 .upload-area:hover {
-  border-color: var(--primary);
-  background-color: hsl(var(--muted));
+  border-color: #374151;
+  background-color: #f9fafb;
 }
 
 .upload-area.dragover {
-  border-color: var(--primary);
-  background-color: hsl(var(--primary) / 0.05);
+  border-color: #374151;
+  background-color: rgba(55, 65, 81, 0.05);
 }
 
 .status-indicator {
