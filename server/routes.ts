@@ -21,23 +21,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { registrationId } = req.params;
       const response = webhookResponses.get(registrationId);
-      
+
       if (response) {
         res.json({
           success: true,
           ...response
         });
       } else {
-        res.json({ 
-          success: false, 
+        res.json({
+          success: false,
           message: "Aguardando resposta do webhook",
           ready: false
         });
       }
     } catch (error) {
       console.error('Webhook status error:', error);
-      res.json({ 
-        success: false, 
+      res.json({
+        success: false,
         error: error instanceof Error ? error.message : "Erro ao verificar status",
         ready: false
       });
@@ -57,10 +57,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           data: validatedData,
           registrationId: registration.id,
         };
-        
+
         console.log('Sending to webhook:', webhookPayload);
-        
-        const webhookResponse = await fetch('https://n8n.automabot.net.br/webhook-test/cadastro', {
+
+        const webhookResponse = await fetch('https://n8n.automabot.net.br/webhook/cadastro', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -85,16 +85,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Continue with the response even if webhook fails
       }
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         registration,
-        message: "Cadastro realizado com sucesso" 
+        message: "Cadastro realizado com sucesso"
       });
     } catch (error) {
       console.error('Registration error:', error);
-      res.status(400).json({ 
-        success: false, 
-        error: error instanceof Error ? error.message : "Erro no cadastro" 
+      res.status(400).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Erro no cadastro"
       });
     }
   });
@@ -103,11 +103,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/resume-workflow", async (req, res) => {
     try {
       const resumeUrl = req.query.resumeUrl as string;
-      
+
       if (!resumeUrl) {
-        return res.status(400).json({ 
-          success: false, 
-          error: "resumeUrl is required" 
+        return res.status(400).json({
+          success: false,
+          error: "resumeUrl is required"
         });
       }
 
@@ -117,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const response = await fetch(resumeUrl, {
         method: 'POST',
         body: req,
-        duplex: 'half' as RequestDuplex,
+        duplex: 'half' as 'half', // Cast to 'half' directly
         headers: {
           'Content-Type': req.headers['content-type'] || '',
           'Content-Length': req.headers['content-length'] || '',
@@ -130,9 +130,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       console.error('Resume workflow error:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: error instanceof Error ? error.message : "Erro ao processar" 
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Erro ao processar"
       });
     }
   });
@@ -141,14 +141,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/upload", upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ 
-          success: false, 
-          error: "Nenhum arquivo foi enviado" 
+        return res.status(400).json({
+          success: false,
+          error: "Nenhum arquivo foi enviado"
         });
       }
 
       const { registrationId } = req.body;
-      
+
       const uploadRecord = await storage.createUpload({
         registrationId: registrationId || null,
         fileName: req.file.originalname,
@@ -168,7 +168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         formData.append('fileSize', uploadRecord.fileSize);
         formData.append('uploadId', uploadRecord.id);
 
-        const webhookResponse = await fetch('https://n8n.automabot.net.br/webhook-test/cadastro', {
+        const webhookResponse = await fetch('https://n8n.automabot.net.br/webhook/cadastro', {
           method: 'POST',
           body: formData,
         });
@@ -185,17 +185,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const finalUpload = await storage.updateUploadStatus(uploadRecord.id, 'completed');
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         upload: finalUpload,
-        message: "Arquivo enviado com sucesso" 
+        message: "Arquivo enviado com sucesso"
       });
     } catch (error) {
       console.error('Upload error:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: error instanceof Error ? error.message : "Erro no upload" 
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Erro no upload"
       });
     }
   });
