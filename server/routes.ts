@@ -113,14 +113,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Forwarding request to:', resumeUrl);
 
-      // Stream request body directly to n8n with duplex option
+      // Forward request to n8n
       const response = await fetch(resumeUrl, {
         method: 'POST',
-        body: req,
-        duplex: 'half' as 'half', // Cast to 'half' directly
+        body: JSON.stringify(req.body),
         headers: {
-          'Content-Type': req.headers['content-type'] || '',
-          'Content-Length': req.headers['content-length'] || '',
+          'Content-Type': 'application/json',
         }
       });
 

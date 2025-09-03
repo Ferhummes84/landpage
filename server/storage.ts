@@ -58,6 +58,8 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const upload: Upload = { 
       ...insertUpload, 
+      registrationId: insertUpload.registrationId || null,
+      status: insertUpload.status || 'uploading',
       id,
       createdAt: new Date()
     };
