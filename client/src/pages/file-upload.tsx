@@ -46,24 +46,24 @@ export default function FileUploadPage() {
       
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('type', 'file_upload');
       
       const registrationId = sessionStorage.getItem('registrationId');
       if (registrationId) {
         formData.append('registrationId', registrationId);
       }
-      
-      formData.append('fileName', file.name);
-      formData.append('fileSize', `${(file.size / 1024 / 1024).toFixed(2)} MB`);
 
-      // Send directly to the webhook
-      const response = await fetch('https://n8n.automabot.net.br/webhook/cadastro', {
+      console.log('Uploading file:', file.name, file.type, file.size);
+
+      // Use our server endpoint instead of direct webhook
+      const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorText = await response.text();
+        console.error('Upload error:', response.status, errorText);
+        throw new Error(`Upload failed: ${response.status}`);
       }
 
       return response.json();
@@ -214,7 +214,6 @@ export default function FileUploadPage() {
                         id="file-input"
                         className="hidden"
                         onChange={handleFileInput}
-                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                         data-testid="file-input"
                       />
                     </div>
