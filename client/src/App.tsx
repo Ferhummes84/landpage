@@ -6,11 +6,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Registration from "@/pages/registration";
+import FileUpload from "@/pages/file-upload";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Registration} />
+      <Route path="/upload" component={FileUpload} />
       <Route component={NotFound} />
     </Switch>
   );
